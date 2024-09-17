@@ -38,7 +38,7 @@ CROSS JOIN
 WHERE i.row_counter__ BETWEEN 1 AND 10
 }, bindings: {positional:{}, named:{}, finder:[{run_number=385516, cms_active=1}]}
 ```
-<img src="lumisections.png"
+<img src="images/lumisections.png"
      style="float: left; margin-right: 10px;" />
 ------------------------------
 ```sql
@@ -102,7 +102,7 @@ CROSS JOIN
   ORDER BY run_number DESC NULLS LAST)) cnt
 }, bindings: {positional:{}, named:{}, finder:[{run_number=385798}]}
 ```
-<img src="runs.png"
+<img src="images/runs.png"
      style="float: left; margin-right: 10px;" />
 ------------------------------    
 ```sql
@@ -152,7 +152,7 @@ ORDER BY fill_number DESC NULLS LAST
 FETCH FIRST 20 ROWS ONLY
 }, bindings: {positional:{}, named:{}, finder:[{fill_number=10122}]}
 ```
-<img src="fills.png"
+<img src="images/fills.png"
      style="float: left; margin-right: 10px;" />
 ------------------------------
 ```sql
@@ -191,7 +191,7 @@ CROSS JOIN
 WHERE i.row_counter__ BETWEEN 1 AND 100
 }, bindings: {positional:{}, named:{}, finder:[{start_run_number=385799}]}
 ```
-<img src="downtimes.png"
+<img src="images/downtimes.png"
      style="float: left; margin-right: 10px;" />
 ------------------------------
 ```sql
@@ -244,5 +244,5 @@ CROSS JOIN
 WHERE i.row_counter__ BETWEEN 1 AND 20
 }, bindings: {positional:{}, named:{}, finder:[{run_number=385516}]}
 ```
-<img src="high level trigger path info.png"
+<img src="images/high level trigger path info.png"
      style="float: left; margin-right: 10px;" />
