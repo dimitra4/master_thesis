@@ -1,6 +1,23 @@
 # master_thesis
 
 ```sql
+
+--> rest request
+  "GET /api/v1/eras?fields=name,start_time,end_time,start_fill,end_fill,start_run,end_run&page[offset]=0&page[limit]=100&sort=-start_time&include=meta,presentation_timestamp "
+DEBUG [2024-11-05 14:57:58,031] ch.cern.cms.daq.oms.api.aggregation.utils.sql.jdbi.AggregationSqlLogger: Executed statement: {
+SELECT
+    (SELECT MAX(f.fill_number) FROM cms_oms.fills f WHERE e.era_id = f.era_id) AS end_fill,
+    (SELECT MAX(r.run_number) FROM cms_oms.runs r WHERE e.era_id = r.era_id) AS end_run,
+    (SELECT MAX(r.stop_time) KEEP (DENSE_RANK LAST ORDER BY r.run_number) FROM cms_oms.runs r WHERE e.era_id = r.era_id) AS end_time,
+    e.name AS name,
+    (SELECT MIN(f.fill_number) FROM cms_oms.fills f WHERE e.era_id = f.era_id) AS start_fill,
+    (SELECT MIN(r.run_number) FROM cms_oms.runs r WHERE e.era_id = r.era_id) AS start_run,
+    (SELECT MIN(r.start_time) KEEP (DENSE_RANK FIRST ORDER BY r.run_number) FROM cms_oms.runs r WHERE e.era_id = r.era_id) AS start_time
+FROM cms_oms.eras e
+ORDER BY start_time DESC NULLS LAST
+}, bindings: {positional:{}, named:{}, finder:[]}
+2001:1458:204:1::102:8eba - - [05/Nov/2024:14:57:58 +0000] "GET /api/v1/eras?fields=name,start_time,end_time,start_fill,end_fill,start_run,end_run&page[offset]=0&page[limit]=100&sort=-start_time&include=meta,presentation_timestamp HTTP/1.1" 200 24727 "https://vocms0183.cern.ch/cms/runtimes/eras" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" 163
+
 --> rest request
   "GET /api/v1/lumisections?fields=lumisection_number,start_time,end_time,delivered_lumi,recorded_lumi,init_lumi,end_lumi,physics_flag&page[offset]=0&page[limit]=10&filter[cms_active][EQ]=true&filter[run_number][EQ]=385516&sort=-lumisection_number&include=meta,presentation_timestamp"
 --> query that QueryBuilder created dynamically (1 main table lumisections and 1 additional scaling_info)
