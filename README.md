@@ -171,6 +171,34 @@ FETCH FIRST 20 ROWS ONLY
 ```
 <img src="images/fills.png"
      style="float: left; margin-right: 10px;" />
+
+```sql
+-> GET REQUEST GET /api/v1/fills?fields=fill_number,start_time,end_time,start_stable_beam,end_stable_beam,first_run_number,last_run_number&page[offset]=0&page[limit]=1&filter[stable_beams][EQ]=true&sort=-fill_number&include=meta 
+SELECT
+    sb.end_time AS end_stable_beam,
+    f.stop_time AS end_time,
+    f.fill_number AS fill_number,
+    (SELECT MIN(r.run_number) FROM cms_oms.runs r WHERE f.fill_number = r.fill_number) AS first_run_number,
+    (SELECT MAX(r.run_number) FROM cms_oms.runs r WHERE f.fill_number = r.fill_number) AS last_run_number,
+    CASE WHEN sb.start_time IS NOT NULL THEN 1 ELSE 0 END AS stable_beams,
+    sb.start_time AS start_stable_beam,
+    f.start_time AS start_time
+FROM cms_oms.fills f
+     LEFT JOIN cms_oms.fill_stable_beams sb ON f.fill_number = sb.fill_number AND sb.stable_beams_event = 1
+WHERE sb.start_time IS NOT NULL
+ORDER BY fill_number DESC NULLS LAST
+FETCH FIRST 1 ROW ONLY
+}, bindings: {positional:{}, named:{}, finder:[]}
+DEBUG [2025-01-24 17:27:13,210] ch.cern.cms.daq.oms.api.aggregation.utils.sql.jdbi.AggregationSqlLogger: Executed statement: {
+SELECT COUNT(*) AS total_row_count__ FROM (
+  SELECT
+      f.fill_number AS fill_number,
+      CASE WHEN sb.start_time IS NOT NULL THEN 1 ELSE 0 END AS stable_beams
+  FROM cms_oms.fills f
+       LEFT JOIN cms_oms.fill_stable_beams sb ON f.fill_number = sb.fill_number AND sb.stable_beams_event = 1
+  WHERE sb.start_time IS NOT NULL
+  ORDER BY fill_number DESC NULLS LAST)
+```
 ------------------------------
 ```sql
 --> rest request
