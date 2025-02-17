@@ -199,6 +199,53 @@ SELECT COUNT(*) AS total_row_count__ FROM (
   WHERE sb.start_time IS NOT NULL
   ORDER BY fill_number DESC NULLS LAST)
 ```
+
+```sql
+HTTP/1.1" 200 23925 "https://vocms0183.cern.ch/cms/fills/summary" 
+-> "GET /api/v1/fills?fields=fill_number,first_run_number,last_run_number,duration,start_time,end_time,start_stable_beam,end_stable_beam,delivered_lumi_stablebeams,recorded_lumi_stablebeams,downtime,efficiency_lumi_stablebeams,peak_lumi,peak_pileup,fill_type_runtime,bunches_colliding,beta_star,energy,injection_scheme&page[offset]=0&page[limit]=20&filter[fill_number][LE]=10405&filter[fill_number][GE]=10305&filter[stable_beams][EQ]=true&sort=-fill_number&include=meta,presentation_timestamp 
+SELECT
+    f.start_beta_star AS beta_star,
+    f.n_colliding_bunches AS bunches_colliding,
+    (SELECT CMS_OMS_AGG.data_summary.get_fill_delivered_lumi(f.fill_number) FROM dual ) * scaling.integrated_lumi_scale_factor AS delivered_lumi_stablebeams,
+    (SELECT NVL(SUM(round( extract( second from (dt.stop_time - dt.start_time) ) + extract( minute from (dt.stop_time - dt.start_time) ) * 60 + extract( hour from (dt.stop_time - dt.start_time) ) * 60 * 60 + extract( day from (dt.stop_time - dt.start_time) ) * 60 * 60 * 24)), 0) FROM cms_oms.downtimes dt WHERE f.fill_number = dt.start_fill_number AND dt.stable_beams = 1 AND dt.enabled = 1) AS downtime,
+    NVL(sb.end_time, SYS_EXTRACT_UTC(SYSTIMESTAMP)) - sb.start_time AS duration,
+    100 * ((SELECT CMS_OMS_AGG.data_summary.get_fill_recorded_lumi(f.fill_number) FROM dual ) * scaling.integrated_lumi_scale_factor) / NULLIF(((SELECT CMS_OMS_AGG.data_summary.get_fill_delivered_lumi(f.fill_number) FROM dual ) * scaling.integrated_lumi_scale_factor), 0) AS efficiency_lumi_stablebeams,
+    sb.end_time AS end_stable_beam,
+    f.stop_time AS end_time,
+    f.energy AS energy,
+    f.fill_number AS fill_number,
+    rt.name AS fill_type_runtime,
+    (SELECT MIN(r.run_number) FROM cms_oms.runs r WHERE f.fill_number = r.fill_number) AS first_run_number,
+    f.injection_scheme AS injection_scheme,
+    scaling.inst_lumi_scale_display AS inst_lumi_scale_display,
+    scaling.inst_lumi_scale_factor AS inst_lumi_scale_factor,
+    scaling.integrated_lumi_scale_display AS integrated_lumi_scale_display,
+    scaling.integrated_lumi_scale_factor AS integrated_lumi_scale_factor,
+    (SELECT MAX(r.run_number) FROM cms_oms.runs r WHERE f.fill_number = r.fill_number) AS last_run_number,
+    f.peak_lumi * scaling.inst_lumi_scale_factor AS peak_lumi,
+    f.peak_pileup AS peak_pileup,
+    (SELECT CMS_OMS_AGG.data_summary.get_fill_recorded_lumi(f.fill_number) FROM dual ) * scaling.integrated_lumi_scale_factor AS recorded_lumi_stablebeams,
+    CASE WHEN sb.start_time IS NOT NULL THEN 1 ELSE 0 END AS stable_beams,
+    sb.start_time AS start_stable_beam,
+    f.start_time AS start_time
+FROM cms_oms.fills f
+     LEFT JOIN cms_oms.scaling_info scaling ON f.scale_id = scaling.scale_id
+     LEFT JOIN cms_oms.runtime_types rt ON f.runtime_type_id = rt.runtime_type_id
+     LEFT JOIN cms_oms.fill_stable_beams sb ON f.fill_number = sb.fill_number AND sb.stable_beams_event = 1
+WHERE f.fill_number >= :fill_number AND f.fill_number <= :fill_number_1 AND sb.start_time IS NOT NULL
+ORDER BY fill_number DESC NULLS LAST
+FETCH FIRST 20 ROWS ONLY
+}, bindings: {positional:{}, named:{}, finder:[{fill_number=10305, fill_number_1=10405}]}
+DEBUG [2025-02-17 13:27:46,776] ch.cern.cms.daq.oms.api.aggregation.utils.sql.jdbi.AggregationSqlLogger: Executed statement: {
+SELECT COUNT(*) AS total_row_count__ FROM (
+  SELECT
+      f.fill_number AS fill_number,
+      CASE WHEN sb.start_time IS NOT NULL THEN 1 ELSE 0 END AS stable_beams
+  FROM cms_oms.fills f
+       LEFT JOIN cms_oms.fill_stable_beams sb ON f.fill_number = sb.fill_number AND sb.stable_beams_event = 1
+  WHERE f.fill_number >= :fill_number AND f.fill_number <= :fill_number_1 AND sb.start_time IS NOT NULL
+  ORDER BY fill_number DESC NULLS LAST)
+```
 ------------------------------
 ```sql
 --> rest request
