@@ -54,6 +54,30 @@ CROSS JOIN
     ORDER BY lumisection_number DESC NULLS LAST)) cnt
 WHERE i.row_counter__ BETWEEN 1 AND 10
 }, bindings: {positional:{}, named:{}, finder:[{run_number=385516, cms_active=1}]}
+
+-> better solution with same outcome
+ SELECT
+      l.cms_active AS cms_active,
+      l.fill_delivered_lumi * scaling.integrated_lumi_scale_factor AS delivered_lumi,
+      LEAD(l.instantaneous_lumi, 1, 0) OVER (ORDER BY l.run_number NULLS LAST, l.lumisection_number NULLS LAST) * scaling.inst_lumi_scale_factor AS end_lumi,
+      l.stop_time AS end_time,
+      l.instantaneous_lumi * scaling.inst_lumi_scale_factor AS init_lumi,
+      scaling.inst_lumi_scale_display AS inst_lumi_scale_display,
+      scaling.inst_lumi_scale_factor AS inst_lumi_scale_factor,
+      scaling.integrated_lumi_scale_display AS integrated_lumi_scale_display,
+      scaling.integrated_lumi_scale_factor AS integrated_lumi_scale_factor,
+      l.lumisection_number AS lumisection_number,
+      l.physics_declared AS physics_flag,
+      l.fill_recorded_lumi * scaling.integrated_lumi_scale_factor AS recorded_lumi,
+      ROW_NUMBER() OVER (ORDER BY l.lumisection_number DESC NULLS LAST) AS row_counter__,
+      l.run_number AS run_number,
+      l.start_time AS start_time,
+      COUNT(*) OVER() as total_row_count
+  FROM cms_oms.lumisections l 
+       LEFT JOIN cms_oms.scaling_info scaling ON l.scale_id = scaling.scale_id
+  WHERE l.run_number = 390123 AND l.cms_active = 1
+  ORDER BY lumisection_number DESC NULLS LAST
+  OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
 ```
 <img src="images/lumisections.png"
      style="float: left; margin-right: 10px;" />
